@@ -1,5 +1,7 @@
 package com.zaga.OrderProj;
 
+import java.util.List;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,10 +22,38 @@ public class OrderController {
 
         @PostMapping("/createOrders")
         public OrderEntity createOrders(@RequestBody OrderEntity orderEntity) {
+                try {
+                        logger.info("Received request to create order: {}", orderEntity);
+                        OrderEntity details = orderService.createOrderDetails(orderEntity);
+                        logger.info("Order created successfully: {}", details);
+                        return details;
+                } catch (Exception e) {
+                        logger.error("Error while creating order: {}", e.getMessage());
+                        throw new RuntimeException("Internal Server Error");
+                }
+        }
+
+        @PostMapping("/createErrorOrders")
+        public OrderEntity createErrorOrder(@RequestBody OrderEntity orderEntity) {
                 logger.info("Received request to create order: {}", orderEntity);
-                OrderEntity details = orderService.createOrderDetails(orderEntity);
-                logger.info("Order created successfully: {}", details);
-                return details;
+
+                // Validate the OrderEntity object for missing fields
+                if (orderEntity == null || orderEntity.getProductId() == null || orderEntity.getProductName() == null
+                                || orderEntity.getOrderId() == null/* add more checks for other fields */) {
+                        throw new OrderCreationException("Invalid order data. One or more fields are missing.");
+                }
+
+                try {
+                        OrderEntity details = orderService.createErrorDetails(orderEntity);
+                        logger.info("Order created successfully: {}", details);
+                        return details;
+                } catch (OrderCreationException e) {
+                        logger.error("Error while creating order: {}", e.getMessage());
+                        throw e;
+                } catch (Exception e) {
+                        logger.error("Error while creating order: {}", e.getMessage());
+                        throw new RuntimeException("Internal Server Error");
+                }
         }
 
         @GetMapping("/getOrders")
@@ -34,9 +64,20 @@ public class OrderController {
                         logger.info("Found order with ID {}: {}", id, getDetails);
                         return ResponseEntity.ok(getDetails);
                 } else {
-                        logger.warn("No order found with ID: {}", id);
+                        logger.error("No order found with ID: {}", id);
                         return ResponseEntity.notFound().build();
                 }
         }
 
+        @GetMapping("/getAllOrders")
+        public ResponseEntity<List<OrderEntity>> getOrders() {
+                List<OrderEntity> allOrders = orderService.getAllOrders();
+                if (!allOrders.isEmpty()) {
+                        logger.info("Found {} orders.", allOrders.size());
+                        return ResponseEntity.ok(allOrders);
+                } else {
+                        logger.error("No orders found.");
+                        return ResponseEntity.notFound().build();
+                }
+        }
 }

@@ -3,6 +3,8 @@ package com.zaga.OrderProj;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -25,6 +27,17 @@ public class OrderService {
         }
     }
 
+    public OrderEntity createErrorDetails(OrderEntity order) {
+        try {
+            OrderEntity details = repo.save(order);
+            logger.info("Order details created successfully: {}", details);
+            return details;
+        } catch (Exception e) {
+            logger.error("Error while creating order details", e);
+            throw e;
+        }
+    }
+
     public OrderEntity getOrderDetails(Long id) {
         try {
             OrderEntity getDetails = repo.findById(id).orElse(null);
@@ -36,6 +49,21 @@ public class OrderService {
             return getDetails;
         } catch (Exception e) {
             logger.error("Error while fetching order details", e);
+            throw e;
+        }
+    }
+
+    public List<OrderEntity> getAllOrders() {
+        try {
+            List<OrderEntity> allOrders = repo.findAll();
+            if (!allOrders.isEmpty()) {
+                logger.info("Found {} orders.", allOrders.size());
+            } else {
+                logger.info("No orders found.");
+            }
+            return allOrders;
+        } catch (Exception e) {
+            logger.error("Error while fetching all orders", e);
             throw e;
         }
     }
