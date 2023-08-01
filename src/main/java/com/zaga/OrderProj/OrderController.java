@@ -40,7 +40,9 @@ public class OrderController {
                 // Validate the OrderEntity object for missing fields
                 if (orderEntity == null || orderEntity.getProductId() == null || orderEntity.getProductName() == null
                                 || orderEntity.getOrderId() == null/* add more checks for other fields */) {
+                        logger.error("Invalid order data. One or more fields are missing.");
                         throw new OrderCreationException("Invalid order data. One or more fields are missing.");
+
                 }
 
                 try {
